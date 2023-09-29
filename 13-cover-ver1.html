@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="jspsych-6.3.1/jspsych.js"></script>
+    <script src="jspsych-6.3.1/plugins/jspsych-survey-likert.js"></script>
+    <script src="jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+    <link rel="stylesheet" href="jspsych-6.3.1/css/jspsych.css">
+  </head>
+  <body>
+    <script>
+      /* experiment parameters */
+      var FIXATION_DURATION = 500;
+      var NUM_TRIALS = 50;
+
+      /* create cover story */
+      var coverStory = {
+        type: 'html-keyboard-response',
+        stimulus: `<p>This is the cover story content. Replace this with your actual cover story.</p>
+          <p>Press any key to continue.</p>`
+      };
+
+      /* create instructions */
+      var instructions = {
+        type: 'html-keyboard-response',
+        stimulus: `<p>In the following experiment, you will be shown strings and asked to rate their randomness.</p>
+          <p>Rate the randomness of each string on a scale from 1 (nonrandom) to 5 (very random).</p>
+          <p>Press any key to begin.</p>`
+      };
+
+/* create the task components */
+var fixation = {
+  type: 'html-keyboard-response',
+  stimulus: '<p style="font-size: 48px; font-family: monospace;">+</p>',
+  choices: jsPsych.NO_KEYS,
+  trial_duration: FIXATION_DURATION
+};
+
+var numpool = [
+  // Remaining code...
+];
+
+/* Randomly select trials without repetition */
+function getRandomTrials(array, numTrials) {
+  var shuffledArray = array.slice().sort(function () {
+    return 0.5 - Math.random();
+  });
+  return shuffledArray.slice(0, numTrials);
+}
+
+// Add cover story to main timeline
+var mainTimeline = [];
+mainTimeline.push(coverStory);
+
+// Create an array of condition descriptions
+var conditionDescriptions = [
+  "Description 1",
+  "Description 2",
+  "Description 3",
+  "Description 4",
+  "Description 5",
+  "Description 6",
+  "Description 7",
+  "Description 8"
+];
+
+// Create a loop to generate 160 trials
+for (var i = 0; i < 160; i++) {
+  // Add condition description every 20 trials
+  if (i % 20 === 0) {
+    var conditionIndex = Math.floor(i / 20) % conditionDescriptions.length;
+    var conditionDescription = {
+      type: 'html-keyboard-response',
+      stimulus: '<p>' + conditionDescriptions[conditionIndex] + '</p>' +
+                '<p>Press any key to continue.</p>'
+    };
+    mainTimeline.push(conditionDescription);
+  }
+
+  // Extract the string from the object
+  var string = Object.values(numpool[i % numpool.length])[0];
+
+  // Create a trial object
+  var trial = {
+    type: 'survey-likert',
+    questions: [{
+      prompt: string,
+      labels: ['1', '2', '3', '4', '5']
+    }],
+    data: {
+      stimulus: string,
+      task: 'rating'
+    }
+  };
+
+  // Add the trial object to the timeline
+  mainTimeline.push(fixation, trial);
+}
+
+/* create the end screen */
+var end = {
+  type: 'html-keyboard-response',
+  stimulus: `<p>You're done! A .csv file containing your data should be automatically downloading right now.
+    Check your default downloads location to find it. Once you've found it, you can close the experiment.</p>`,
+  on_load: function() {
+    jsPsych.data.get().localSave('csv', 'psychology_test_data.csv');
+  }
+};
+
+/* add end screen to main timeline */
+mainTimeline.push(end);
+
+/* run the experiment */
+jsPsych.init({
+  timeline: mainTimeline,
+  experiment_width: 850
+});
+
+    </script>
+  </body>
+</html>

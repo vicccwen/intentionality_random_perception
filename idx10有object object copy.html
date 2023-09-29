@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="jspsych-6.3.1/jspsych.js"></script>
+    <script src="jspsych-6.3.1/plugins/jspsych-survey-likert.js"></script>
+    <script src="jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+    <script src="stimuli.js"></script>
+    <script src= "numpool.js"></script>
+    <link rel="stylesheet" href="jspsych-6.3.1/css/jspsych.css">
+  </head>
+  <body></body>
+  <script> 
+    /* experiment parameters */
+    var FIXATION_DURATION = 500;
+    
+    /* create instructions */
+    var instructions = {
+      type: 'html-keyboard-response',
+      stimulus: `<p>In the following experiment you will be shown three strings and asked to scale their randomness.</p>
+        <p>Randomness of the string will be scaled from 1 (nonrandom) to 5(very random)</p>
+        <p>Select the number that could best rate the randomness of the string.</p>
+        <p>Press the space bar to continue.</p>`,/* The wording of the prompt needs to be refined */
+      choices: [' ']
+    }
+    /* create random selection var*/
+    /*var numstr = Math.floor(Math.random() * numpool.length);
+    var random_num = Number(numstr)
+    var random_value = numpool[random_num];*/
+
+    /* create the task */
+
+    var fixation = {
+      type: 'html-keyboard-response',
+      stimulus: '<p style="font-size: 48px; font-family: monospace;">+</p>',
+      choices: jsPsych.NO_KEYS,
+      trial_duration: FIXATION_DURATION
+    }
+    
+    var target = {
+      type: 'survey-likert',
+      questions:[
+    {
+      prompt: function(){
+        return `<p style="font-size: 48px; font-family: monospace;">${jsPsych.timelineVariable('target', true).toUpperCase()}</p>`
+      },
+      labels: [
+        "1", 
+        "2", 
+        "3", 
+        "4", 
+        "5"
+      ]
+    }
+    ],
+    data: {
+        target: jsPsych.timelineVariable('target'),
+        test: jsPsych.timelineVariable('test'),
+        target_type: jsPsych.timelineVariable('condition'),
+        task: 'target'
+      },
+
+    }
+
+
+
+
+    var target2 = {
+      timeline_variables: numpool,
+      type: 'survey-likert',
+      questions: [
+    {
+      prompt: "target", 
+      labels: [
+        "1", 
+        "2", 
+        "3", 
+        "4", 
+        "5"
+      ]
+    }
+  ],
+      data: {
+        target: jsPsych.timelineVariable('target'),
+        target2: jsPsych.timelineVariable('target2'),
+        target3: jsPsych.timelineVariable('target3'),
+        target_type: jsPsych.timelineVariable('condition'),
+        task: 'target'
+      },
+    }
+
+    var target3 = {
+      timeline_variables: test_stimuli, 
+      type: 'survey-likert',
+      questions: [
+    {
+      prompt: "1110000000", 
+      labels: [
+        "1", 
+        "2", 
+        "3", 
+        "4", 
+        "5"
+      ]
+    }
+  ],
+      data: {
+        target: jsPsych.timelineVariable('target'),
+        target2: jsPsych.timelineVariable('target2'),
+        target3: jsPsych.timelineVariable('target3'),
+        target_type: jsPsych.timelineVariable('condition'),
+        task: 'target'
+      },
+    }
+
+    /* create the test */
+    var test = {
+      timeline: [fixation, target, target2, target3],
+      timeline_variables: test_stimuli,
+      data: {
+        phase: 'test'
+      },
+      randomize_order: true
+    }
+
+    /* create the end screen */
+
+    var end = {
+      type: `html-keyboard-response`,
+      stimulus: `<p>You're done! A .csv file containing your data should be automatically downloading right now.
+        Check your default downloads location to find it. Once you've found it you can close the experiment.</p>`,
+      on_load: function(){
+        jsPsych.data.get().filter({phase: 'test', task: 'target'})
+          .ignore('internal_node_id')
+          .ignore('time_elapsed')
+          .ignore('trial_type')
+          .ignore('stimulus')
+          .ignore('task')
+          .ignore('phase')
+          .ignore('trial_index')
+          .localSave('csv', 'lexical_decision.csv');
+      }
+    }
+
+    /* create the timeline */
+    var timeline = [];
+
+    timeline.push(instructions);
+
+    timeline.push(test);
+    timeline.push(end);
+
+    jsPsych.init({
+      timeline: timeline,
+      experiment_width: 850
+    });
+  </script>
+</html>
