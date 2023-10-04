@@ -5,8 +5,11 @@
     <script src="jspsych-6.3.1/plugins/jspsych-survey-likert.js"></script>
     <script src="jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
     <script src="jspsych-6.3.1/plugins/jspsych-survey-text.js"></script>
+    <script src="jspsych-6.3.1/plugins/jspsych-survey-html-form.js"></script>
+
     <link rel="stylesheet" href="jspsych-6.3.1/css/jspsych.css">
-  </head>
+</head>
+
   <body>
     <script>
       /* experiment parameters */
@@ -14,26 +17,83 @@
       var string_num = 1;
       var NUM_TRIALS = string_num*4;
 
+      /*create a subject ID*/
+      var subjectID = 'SUBJ_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      
       var demographicQuestions = {
-  type: 'survey-text',
-  questions: [
-    {prompt: "Name:", placeholder: "Enter your name here"},
-    {prompt: "Year:", placeholder: "e.g., Freshman, 2023, etc."},
-    {prompt: "Major:", placeholder: "Enter your major here"}
-  ],
-  on_finish: function(data) {
-  var responses = JSON.parse(data.responses);
-  demographicsData = {
-    Name: responses.Q0,
-    Year: responses.Q1,
-    Major: responses.Q2
-  };
-  }
-};
+        type: 'survey-html-form',
+    preamble: '<p>Please provide the following information:</p>',
+    html: `
+        <div>
+            <label for="gender">Gender:</label>
+            <select name="gender" id="gender">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="nonbinary">Nonbinary</option>
+            </select>
+        </div>
+        <div>
+            <label for="age">Age:</label>
+            <input type="number" name="age" id="age" placeholder="Enter your age here">
+        </div>
+        <div>
+            <label for="race">Race:</label>
+            <select name="race" id="race">
+                <option value="american first nations">American First Nations</option>
+                <option value="asian">Asian</option>
+                <option value="black">Black</option>
+                <option value="more than one">More than one</option>
+                <option value="pacific islander">Pacific Islander</option>
+                <option value="prefer not to say">Prefer not to say</option>
+                <option value="south asian">South Asian</option>
+                <option value="white">White</option>
+            </select>
+        </div>
+        <div>
+            <label for="education">Education:</label>
+            <select name="education" id="education">
+                <option value="high school">High School</option>
+                <option value="some college">Some College</option>
+                <option value="undergraduate">Undergraduate Degree</option>
+                <option value="post graduate">Post-graduate Degree</option>
+            </select>
+        </div>
+        <div>
+            <label for="stats-course">Have you ever taken any statistics course?</label>
+            <select name="stats-course" id="stats-course">
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+                <option value="not sure">Not Sure</option>
+            </select>
+        </div>
+    `,
+
+on_finish: function(data) {  
+    // Let's say the key is formData for example
+  if(data.responses) {
+    var responses = JSON.parse(data.responses);
+    demographicsData = {
+      'subj ID': subjectID,
+      Gender: responses.gender,
+      Age: responses.age,
+      Race: responses.race,
+      Education: responses.education,
+      Statcourse: responses['stats-course']
+    };
+      // Save the demographicsData to CSV
+      jsPsych.data.addDataToLastTrial(demographicsData);
+      jsPsych.data.get().localSave('csv', 'demographics_' + subjectID + '.csv');
+    } else {
+        console.warn('Form responses are not found.');
+    }
+}
+}
+
+
       /* create cover story */
       var coverStory = {
         type: 'html-keyboard-response',
-        stimulus: `<p>Imagine you are a space rescuer whose job is to search for astronauts lost in deep space. Our fleet of spaceships are all equipped with radio transmitters, which can be operated by the astronaut in case they are in need of rescue. To call for help, astronauts can use the transmitter to send out sequences made of two types of radio waves— Lambda (Λ) and Gamma (Γ). However, both types of waves may also be produced by natural phenomena, such as celestial body activities—in this case, Λ and Γ are equally likely to appear. Everyone in space knows that by current technical standard, radio receivers can only pick up [10] waves in a row— that is, you can only detect sequences that have [10] waves (as mentioned before, each wave is either Λ or Γ). If you receive a sequence and think it was produced by natural phenomena, you will ignore it and stay on course. If you think it came from humans, then we will send a rescue team. In this study, you will see about 250 sequences. Your task is to decide whether each sequence was generated by a natural phenomenon or by a human astronaut. Please answer as quickly and accurately as possible!</p>
+        stimulus: `<p>Imagine you are a space rescuer whose job is to search for astronauts lost in deep space. Our fleet of spaceships are all equipped with radio transmitters, which can be operated by the astronaut in case they are in need of rescue. To call for help, astronauts can use the transmitter to send out sequences made of two types of radio waves— 0 and 1. However, both types of waves may also be produced by natural phenomena, such as celestial body activities—in this case, 0 and 1 are equally likely to appear. Everyone in space knows that by current technical standard, radio receivers can only pick up [10] waves in a row— that is, you can only detect sequences that have [10] waves (as mentioned before, each wave is either 0 or 1). If you receive a sequence and think it was produced by natural phenomena, you will ignore it and stay on course. If you think it came from humans, then we will send a rescue team. In this study, you will see about 250 sequences. Your task is to decide whether each sequence was generated by a natural phenomenon or by a human astronaut. Please answer as quickly and accurately as possible!</p>
           <p>Press any key to continue.</p>`
       };
 
@@ -177,6 +237,7 @@ for (var i = 0; i < randomizedTrials.length; i++) {
       labels: ['1', '2', '3', '4', '5']
     }],
     data: {
+      'subj ID': subjectID,
       stimulus: string,
       task: 'rating'
     }
@@ -192,7 +253,7 @@ for (var i = 0; i < randomizedTrials.length; i++) {
         stimulus: `<p>You're done! A .csv file containing your data should be automatically downloading right now.
           Check your default downloads location to find it. Once you've found it, you can close the experiment.</p>`,
         on_load: function() {
-          jsPsych.data.get().localSave('csv', 'psychology_test_data.csv');
+          jsPsych.data.get().localSave('csv', 'experiment_data_' + subjectID + '.csv');
         }
       };
 
