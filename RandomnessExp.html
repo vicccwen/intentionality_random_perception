@@ -20,6 +20,7 @@
       /*create a subject ID*/
       var subjectID = 'SUBJ_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
       
+      /*create demographic questions*/
       var demographicQuestions = {
         type: 'survey-html-form',
     preamble: '<p>Please provide the following information:</p>',
@@ -125,11 +126,14 @@ var numpool = [{"00000000":"00000001"},{"00000000":"00000010"},{"00000000":"0000
 
 
 
-      // Add cover story to main timeline
+      // Add cover story and demographic questions to main timeline
+      // Add instructions to main timeline
       var mainTimeline = [];
-      mainTimeline.push(demographicQuestions)
+      mainTimeline.push(demographicQuestions);
       mainTimeline.push(coverStory);
+      mainTimeline.push(instructions);
 
+      /*get the trials according to the distribution */
       var randomizedTrials = getRandomTrials(numpool, NUM_TRIALS);
 
       if (randomizedTrials === "00000000" || randomizedTrials === "11111111") {
@@ -142,8 +146,8 @@ var numpool = [{"00000000":"00000001"},{"00000000":"00000010"},{"00000000":"0000
 
     console.log(numpool)
 
-      // Add instructions to main timeline
-      mainTimeline.push(instructions);
+      
+
 
 // Create an array of condition descriptions
 var conditionDescriptions = [
@@ -157,6 +161,7 @@ var conditionDescriptions = [
   "8. In the quadrant you are currently monitoring, one of the reasons why a distress signal may be triggered is because of a life support malfunction.  In such as state, astronauts will often drift in and out of consciousness.  As a result, when they are sending a radio transmission, they may not be fully aware of what they are doing."
 ];
 
+/*There are 4 stories per version, if non-repetitive, there should be 70 versions*/
 var NUM_STORIES_PER_VERSION = 4;
 var NUM_VERSIONS = 70;
 var versions = [];
@@ -196,63 +201,70 @@ for (var i = 0; i < NUM_VERSIONS; i++) {
 console.log(versions);
 
 //a function that select story index from 1 to 8
+// ... [Previous code, including the creation of versions] ...
+
+// Initialize usedNumbers outside the loop
 function getRandomNumberWithoutRepetition(usedNumbers) {
-  var allNumbers = [1, 2, 3, 4, 5, 6, 7, 8];
-  var availableNumbers = allNumbers.filter((num) => !usedNumbers.includes(num));
+  var allNumbers = [0, 1, 2, 3, 4, 5, 6, 7]; // Indices for the 8 conditionDescriptions
+  var availableNumbers = allNumbers.filter(function(num) {
+    return !usedNumbers.includes(num);
+  });
 
   if (availableNumbers.length === 0) {
-    // All numbers have been used, reset the usedNumbers array
-    usedNumbers.length = 0;
-    availableNumbers = allNumbers;
+    usedNumbers.length = 0; // Reset the usedNumbers array
+    availableNumbers = allNumbers.slice(); // Reset availableNumbers to all indices
   }
 
   var randomIndex = Math.floor(Math.random() * availableNumbers.length);
   var selectedNumber = availableNumbers[randomIndex];
-
-  // Add the selected number to the usedNumbers array
-  usedNumbers.push(selectedNumber);
+  
+  usedNumbers.push(selectedNumber); // Add the selected number to the usedNumbers array
 
   return selectedNumber;
 }
 
-// Create a loop to iterate over the randomized trials
-for (var i = 0; i < randomizedTrials.length; i++) {
-  // Add condition description every string_num trials
-  if (i % string_num === 0) {
-    var usedNumbers = [];
-    var NUM_CONDITIONS = 8; // Total number of conditions
-    var conditionIndex = getRandomNumberWithoutRepetition(usedNumbers);
 
-    var conditionDescription = {
-      type: 'html-keyboard-response',
-      stimulus: '<p>' + conditionDescriptions[conditionIndex] + '</p>' +
-                '<p>Press any key to continue.</p>'
-    };
-    mainTimeline.push(conditionDescription);
-  }
+var usedNumbers = [];
+
+// Adjusted getRandomNumberWithoutRepetition function
 
   
-  // Extract the string from the object
-  var string = Object.values(randomizedTrials[i])[0];
+// Create a loop to iterate over the condition descriptions
+for (var i = 0; i < conditionDescriptions.length; i++) {
+  if (usedNumbers.length >= conditionDescriptions.length) {
+    // All stories have been used, reset the usedNumbers array
+    usedNumbers.length = 0;
+  }
 
-  // Create a trial object
-  var trial = {
-    type: 'survey-likert',
-    questions: [{
-      prompt: '<p>Please rate how random do you think this string is:</p><p>' + string + '</p>',
-      labels: ['1', '2', '3', '4', '5']
-    }],
-    data: {
-      'subj ID': subjectID,
-      stimulus: string,
-      task: 'rating'
-    }
+  var conditionIndex = getRandomNumberWithoutRepetition(usedNumbers);
+
+  var conditionDescription = {
+    type: 'html-keyboard-response',
+    stimulus: '<p>' + conditionDescriptions[conditionIndex] + '</p>' +
+              '<p>Press any key to continue.</p>'
   };
+  mainTimeline.push(conditionDescription);
 
-  // Add the trial object to the timeline
-  mainTimeline.push(fixation, trial);
+  // Immediately after adding condition description, add the corresponding string
+  if (randomizedTrials[i]) {
+    var string = Object.values(randomizedTrials[i])[0];
+    var trial = {
+      type: 'survey-likert',
+      questions: [{
+        prompt: '<p>Please rate how random do you think this string is:</p><p>' + string + '</p>',
+        labels: ['1', '2', '3', '4', '5']
+      }],
+      data: {
+        'subj ID': subjectID,
+        stimulus: string,
+        task: 'rating'
+      }
+    };
+    mainTimeline.push(fixation, trial);
+  } else {
+    console.error('Invalid item in randomizedTrials at index:', i);
+  }
 }
-
       /* create the end screen */
       var end = {
         type: 'html-keyboard-response',
