@@ -147,14 +147,14 @@ var numpool = [{"00000000":"00000001"},{"00000000":"00000010"},{"00000000":"0000
 
 // Create an array of condition descriptions
 var conditionDescriptions = [
-  "In the quadrant you are currently monitoring, the astronauts are trained to be vigilant and to always accept help. When the emergency protocol is triggered, they will follow guidelines and send distress signals, as they very much want help to arrive.",
-  "In the quadrant you are currently monitoring, the astronauts are trained to be unafraid and are reluctant to accept help when the emergency protocol is triggered. They will follow guidelines and send distress signals but do not really want help to arrive.",
-  "In the quadrant you are currently monitoring, astronauts have a detailed, up-to-date instruction manual for what to do in case of an emergency. As a result, the astronauts know that the signals should be non-random sequences since only then do the rescue ships recognize the sequences as a distress signal.",
-  "In the quadrant you are currently monitoring, astronauts have an instruction manual for what to do in case of an emergency but it has some unfortunate omissions. As a result, the astronauts don’t know that the signals should be non-random sequences, since only then do the rescue ships recognize the sequences as a distress signal.",
-  "In the quadrant you are currently monitoring, each member of the team is well-trained to use the transmission equipment. Even though the equipment can be difficult to operate when in zero gravity and while wearing bulky gloves, the astronauts are highly skilled at executing the radio transmissions they want to send.",
-  "In the quadrant you are currently monitoring, no member of the team has been trained to use the transmission equipment. The equipment can be difficult to operate when in zero gravity and wearing bulky gloves, so the astronauts are often unable to execute the radio transmissions they want to send.",
-  "In the quadrant you are currently monitoring, one of the reasons why a distress signal may be triggered is because of a life support malfunction. To stay fully conscious astronauts are equipped with oxygen tanks.  As a result, when they are sending a radio transmission, they are fully aware of what they are doing.",
-  "In the quadrant you are currently monitoring, one of the reasons why a distress signal may be triggered is because of a life support malfunction.  In such as state, astronauts will often drift in and out of consciousness.  As a result, when they are sending a radio transmission, they may not be fully aware of what they are doing."
+  "1. In the quadrant you are currently monitoring, the astronauts are trained to be vigilant and to always accept help. When the emergency protocol is triggered, they will follow guidelines and send distress signals, as they very much want help to arrive.",
+  "2. In the quadrant you are currently monitoring, the astronauts are trained to be unafraid and are reluctant to accept help when the emergency protocol is triggered. They will follow guidelines and send distress signals but do not really want help to arrive.",
+  "3. In the quadrant you are currently monitoring, astronauts have a detailed, up-to-date instruction manual for what to do in case of an emergency. As a result, the astronauts know that the signals should be non-random sequences since only then do the rescue ships recognize the sequences as a distress signal.",
+  "4. In the quadrant you are currently monitoring, astronauts have an instruction manual for what to do in case of an emergency but it has some unfortunate omissions. As a result, the astronauts don’t know that the signals should be non-random sequences, since only then do the rescue ships recognize the sequences as a distress signal.",
+  "5. In the quadrant you are currently monitoring, each member of the team is well-trained to use the transmission equipment. Even though the equipment can be difficult to operate when in zero gravity and while wearing bulky gloves, the astronauts are highly skilled at executing the radio transmissions they want to send.",
+  "6. In the quadrant you are currently monitoring, no member of the team has been trained to use the transmission equipment. The equipment can be difficult to operate when in zero gravity and wearing bulky gloves, so the astronauts are often unable to execute the radio transmissions they want to send.",
+  "7. In the quadrant you are currently monitoring, one of the reasons why a distress signal may be triggered is because of a life support malfunction. To stay fully conscious astronauts are equipped with oxygen tanks.  As a result, when they are sending a radio transmission, they are fully aware of what they are doing.",
+  "8. In the quadrant you are currently monitoring, one of the reasons why a distress signal may be triggered is because of a life support malfunction.  In such as state, astronauts will often drift in and out of consciousness.  As a result, when they are sending a radio transmission, they may not be fully aware of what they are doing."
 ];
 
 var NUM_STORIES_PER_VERSION = 4;
@@ -172,6 +172,8 @@ for (var i = 0; i < conditionDescriptions.length; i++) {
   }
 }
 
+
+
 function shuffleArray(array) {
   for (var i = array.length - 1; i > 0; i--) {
     var j = Math.floor(Math.random() * (i + 1));
@@ -181,6 +183,9 @@ function shuffleArray(array) {
   }
 }
 shuffleArray(versions);
+shuffleArray(conditionDescriptions);
+
+
 
 // Assign version numbers to each combination
 for (var i = 0; i < NUM_VERSIONS; i++) {
@@ -217,6 +222,7 @@ for (var i = 0; i < randomizedTrials.length; i++) {
     var usedNumbers = [];
     var NUM_CONDITIONS = 8; // Total number of conditions
     var conditionIndex = getRandomNumberWithoutRepetition(usedNumbers);
+
     var conditionDescription = {
       type: 'html-keyboard-response',
       stimulus: '<p>' + conditionDescriptions[conditionIndex] + '</p>' +
@@ -233,7 +239,7 @@ for (var i = 0; i < randomizedTrials.length; i++) {
   var trial = {
     type: 'survey-likert',
     questions: [{
-      prompt: string,
+      prompt: '<p>Please rate how random do you think this string is:</p><p>' + string + '</p>',
       labels: ['1', '2', '3', '4', '5']
     }],
     data: {
