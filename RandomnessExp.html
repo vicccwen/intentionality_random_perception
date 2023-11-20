@@ -166,88 +166,26 @@ var NUM_STORIES_PER_VERSION = 4;
 var NUM_VERSIONS = 70;
 var versions = [];
 
-for (var i = 0; i < conditionDescriptions.length; i++) {
-  for (var j = i + 1; j < conditionDescriptions.length; j++) {
-    for (var k = j + 1; k < conditionDescriptions.length; k++) {
-      for (var l = k + 1; l < conditionDescriptions.length; l++) {
-        var version = [conditionDescriptions[i], conditionDescriptions[j], conditionDescriptions[k], conditionDescriptions[l]];
-        versions.push(version);
-      }
-    }
-  }
+// Function to get four unique random stories
+function getRandomStories(stories, numStories) {
+  var shuffled = stories.slice().sort(function() { return 0.5 - Math.random(); });
+  return shuffled.slice(0, numStories);
 }
 
+// Select four unique stories
+var selectedStories = getRandomStories(conditionDescriptions, 4);
 
-
-function shuffleArray(array) {
-  for (var i = array.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var temp = array[i];
-    array[i] = array[j];
-    array[j] = temp;
-  }
-}
-shuffleArray(versions);
-shuffleArray(conditionDescriptions);
-
-
-
-// Assign version numbers to each combination
-for (var i = 0; i < NUM_VERSIONS; i++) {
-  versions[i].unshift('VERSION ' + (i + 1));
-}
-
-// Now, the 'versions' array contains all 70 versions, each with a version number and 4 stories in random order
-console.log(versions);
-
-//a function that select story index from 1 to 8
-// ... [Previous code, including the creation of versions] ...
-
-// Initialize usedNumbers outside the loop
-function getRandomNumberWithoutRepetition(usedNumbers) {
-  var allNumbers = [0, 1, 2, 3, 4, 5, 6, 7]; // Indices for the 8 conditionDescriptions
-  var availableNumbers = allNumbers.filter(function(num) {
-    return !usedNumbers.includes(num);
-  });
-
-  if (availableNumbers.length === 0) {
-    usedNumbers.length = 0; // Reset the usedNumbers array
-    availableNumbers = allNumbers.slice(); // Reset availableNumbers to all indices
-  }
-
-  var randomIndex = Math.floor(Math.random() * availableNumbers.length);
-  var selectedNumber = availableNumbers[randomIndex];
-  
-  usedNumbers.push(selectedNumber); // Add the selected number to the usedNumbers array
-
-  return selectedNumber;
-}
-
-
-var usedNumbers = [];
-
-// Adjusted getRandomNumberWithoutRepetition function
-
-  
-// Create a loop to iterate over the condition descriptions
-for (var i = 0; i < conditionDescriptions.length; i++) {
-  if (usedNumbers.length >= conditionDescriptions.length) {
-    // All stories have been used, reset the usedNumbers array
-    usedNumbers.length = 0;
-  }
-
-  var conditionIndex = getRandomNumberWithoutRepetition(usedNumbers);
-
+// Iterate over the selected stories and add them to the main timeline
+selectedStories.forEach(function(story, index) {
   var conditionDescription = {
     type: 'html-keyboard-response',
-    stimulus: '<p>' + conditionDescriptions[conditionIndex] + '</p>' +
-              '<p>Press any key to continue.</p>'
+    stimulus: '<p>' + story + '</p><p>Press any key to continue.</p>'
   };
   mainTimeline.push(conditionDescription);
 
-  // Immediately after adding condition description, add the corresponding string
-  if (randomizedTrials[i]) {
-    var string = Object.values(randomizedTrials[i])[0];
+  // Add the corresponding string from randomizedTrials
+  if (randomizedTrials[index]) {
+    var string = Object.values(randomizedTrials[index])[0];
     var trial = {
       type: 'survey-likert',
       questions: [{
@@ -262,9 +200,9 @@ for (var i = 0; i < conditionDescriptions.length; i++) {
     };
     mainTimeline.push(fixation, trial);
   } else {
-    console.error('Invalid item in randomizedTrials at index:', i);
+    console.error('Invalid item in randomizedTrials at index:', index);
   }
-}
+});
       /* create the end screen */
       var end = {
         type: 'html-keyboard-response',
