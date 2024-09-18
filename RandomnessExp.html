@@ -20,75 +20,97 @@
       /*create a subject ID*/
       var subjectID = 'SUBJ_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
 
-      /*create demographic questions*/
-      var demographicQuestions = {
-        type: 'survey-html-form',
-    preamble: '<p>Please provide the following information:</p>',
+/* Create demographic questions */
+var demographicQuestions = {
+    type: 'survey-html-form',
+    preamble: `
+        <p>Please provide the following information:</p>
+        <p>Your responses are confidential and will be used solely for research purposes. You may choose to skip any questions you do not wish to answer.</p>
+    `,
     html: `
         <div>
-            <label for="gender">Gender:</label>
+            <label for="gender">Gender Identity:</label>
             <select name="gender" id="gender">
+                <option value="" disabled selected>Select your option</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
-                <option value="nonbinary">Nonbinary</option>
+                <option value="nonbinary">Non-binary</option>
+                <option value="other">Other</option>
+                <option value="prefer-not-to-say">Prefer not to say</option>
             </select>
         </div>
         <div>
             <label for="age">Age:</label>
-            <input type="number" name="age" id="age" placeholder="Enter your age here">
+            <input type="number" name="age" id="age" placeholder="Enter your age" min="18" max="120">
         </div>
         <div>
-            <label for="race">Race:</label>
-            <select name="race" id="race">
-                <option value="american first nations">American First Nations</option>
-                <option value="asian">Asian</option>
-                <option value="black">Black</option>
-                <option value="more than one">More than one</option>
-                <option value="pacific islander">Pacific Islander</option>
-                <option value="prefer not to say">Prefer not to say</option>
-                <option value="south asian">South Asian</option>
-                <option value="white">White</option>
-            </select>
+            <label for="race">Race/Ethnicity (select all that apply):</label>
+            <div>
+                <input type="checkbox" name="race" value="american-indian-alaska-native"> Native American or Alaska Native<br>
+                <input type="checkbox" name="race" value="asian"> Asian<br>
+                <input type="checkbox" name="race" value="black-african-american"> Black or African American<br>
+                <input type="checkbox" name="race" value="hispanic-latino"> Hispanic or Latino<br>
+                <input type="checkbox" name="race" value="native-hawaiian-pacific-islander"> Native Hawaiian or Pacific Islander<br>
+                <input type="checkbox" name="race" value="white"> White<br>
+                <input type="checkbox" name="race" value="middle-eastern-north-african"> Middle Eastern or North African<br>
+                <input type="checkbox" name="race" value="other"> Other<br>
+                <input type="checkbox" name="race" value="prefer-not-to-say"> Prefer not to say<br>
+            </div>
         </div>
         <div>
-            <label for="education">Education:</label>
+            <label for="education">Highest Level of Education Completed:</label>
             <select name="education" id="education">
-                <option value="high school">High School</option>
-                <option value="some college">Some College</option>
-                <option value="undergraduate">Undergraduate Degree</option>
-                <option value="post graduate">Post-graduate Degree</option>
+                <option value="" disabled selected>Select your option</option>
+                <option value="less-than-high-school">Less than High School</option>
+                <option value="high-school-diploma">High School Diploma or GED</option>
+                <option value="some-college-no-degree">Some College, No Degree</option>
+                <option value="associate-degree">Associate Degree</option>
+                <option value="bachelor-degree">Bachelor's Degree</option>
+                <option value="master-degree">Master's Degree</option>
+                <option value="professional-degree">Professional Degree (e.g., MD, JD)</option>
+                <option value="doctorate-degree">Doctorate Degree (e.g., PhD)</option>
+                <option value="other">Other</option>
+                <option value="prefer-not-to-say">Prefer not to say</option>
             </select>
         </div>
         <div>
             <label for="stats-course">Have you ever taken any statistics course?</label>
             <select name="stats-course" id="stats-course">
-                <option value="yes">Yes</option>
+                <option value="" disabled selected>Select your option</option>
+                <option value="yes-formal">Yes, formal course</option>
+                <option value="yes-informal">Yes, informal learning</option>
                 <option value="no">No</option>
-                <option value="not sure">Not Sure</option>
+                <option value="other">Other</option>
+                <option value="prefer-not-to-say">Prefer not to say</option>
             </select>
         </div>
     `,
+    on_finish: function(data) {
+        // Process and store the responses
+        var formData = jsPsych.data.get().last(1).values()[0].response;
 
-on_finish: function(data) {  
-    // Let's say the key is formData for example
-  if(data.responses) {
-    var responses = JSON.parse(data.responses);
-    demographicsData = {
-      'subj ID': subjectID,
-      Gender: responses.gender,
-      Age: responses.age,
-      Race: responses.race,
-      Education: responses.education,
-      Statcourse: responses['stats-course']
-    };
-      // Save the demographicsData to CSV
-      jsPsych.data.addDataToLastTrial(demographicsData);
-      jsPsych.data.get().localSave('csv', 'demographics_' + subjectID + '.csv');
-    } else {
-        console.warn('Form responses are not found.');
+        // Prepare demographics data
+        demographicsData = {
+            'subj ID': subjectID,
+            Gender: formData.gender || 'Not provided',
+            Age: formData.age || 'Not provided',
+            Race: [], // We'll process this next
+            Education: formData.education || 'Not provided',
+            StatCourse: formData['stats-course'] || 'Not provided',
+        };
+
+        // Collect race data
+        var raceSelections = [];
+        var raceInputs = document.querySelectorAll('input[name="race"]:checked');
+        raceInputs.forEach(function(input) {
+            raceSelections.push(input.value);
+        });
+        demographicsData.Race = raceSelections.join(', ') || 'Not provided';
+
+        // Add the demographics data to all subsequent trials
+        jsPsych.data.addProperties(demographicsData);
     }
-}
-}
+};
 
       /* create cover story */
       var coverStory = {
@@ -249,58 +271,71 @@ selectedVersion.descriptions.forEach(function(description, versionIndex) {
     // Correctly access the set of questions for the current description
     let questionSet = selectedVersion.questions[versionIndex];
 
-    let questionsTrial = {
-        timeline: [{
-            type: 'survey-multi-choice',
-            questions: questionSet.map(function(q, index) {
-                return {
-                    prompt: q.prompt,
-                    options: ['True', 'False'],
-                    required: true,
-                    horizontal: true,
-                    name: 'Q' + index // Unique name for each question
-                };
-            }),
-            on_finish: function(data) {
-                var responses = data.response;
-                var allCorrect = true; // Assume true initially
+    // Initialize the warning message as empty
+    let warningMessage = '';
 
-                questionSet.forEach(function(question, index) {
-                    var responseKey = 'Q' + index;
-                    var correctAnswer = question.correct;
-                    var userAnswer = responses[responseKey];
+    let comprehensionLoop = {
+        timeline: [
+            {
+                type: 'survey-multi-choice',
+                preamble: function() {
+                    return warningMessage + '<button id="show-description">Read Story Again</button><div id="description" style="display:none;">' + description + '</div>';
+                },
+                questions: questionSet.map(function(q, index) {
+                    return {
+                        prompt: q.prompt,
+                        options: ['True', 'False'],
+                        required: true,
+                        horizontal: true,
+                        name: 'Q' + index // Unique name for each question
+                    };
+                }),
+                on_load: function() {
+                    document.getElementById('show-description').addEventListener('click', function() {
+                        var desc = document.getElementById('description');
+                        if (desc.style.display === 'none') {
+                            desc.style.display = 'block';
+                        } else {
+                            desc.style.display = 'none';
+                        }
+                    });
+                },
+                on_finish: function(data) {
+                    var responses = data.response;
+                    var allCorrect = true; // Assume true initially
 
-                    if (userAnswer !== correctAnswer) {
-                        allCorrect = false; // Set to false if any answer is incorrect
-                    }
-                });
+                    questionSet.forEach(function(question, index) {
+                        var responseKey = 'Q' + index;
+                        var correctAnswer = question.correct;
+                        var userAnswer = responses[responseKey];
 
-                jsPsych.data.getLastTrialData().values()[0].allCorrect = allCorrect;
+                        if (userAnswer !== correctAnswer) {
+                            allCorrect = false; // Set to false if any answer is incorrect
+                        }
+                    });
+
+                    data.allCorrect = allCorrect;
+                }
             }
-        }],
+        ],
         loop_function: function(data) {
             if (!data.values()[0].allCorrect) {
                 // Participant got at least one answer wrong
 
-                // Warning and re-display of the condition description
-                let warningTrial = {
-                    type: 'html-keyboard-response',
-                    stimulus: '<p>Some of your answers were not correct. Please read the story again and try to answer the questions correctly this time.</p><p>' + description + '</p><p>Press any key to try the questions again.</p>'
-                };
+                // Update the warning message
+                warningMessage = '<p style="color:red;">Some of your answers were not correct. Please try again.</p>';
 
-                // Re-insert the description and questions trials into the timeline
-                jsPsych.addNodeToEndOfTimeline({
-                    timeline: [warningTrial, descriptionTrial, questionsTrial]
-                });
-
-                return true; // Repeat the loop, which now includes the warning and re-display of the condition description
+                return true; // Repeat the loop
             } else {
+                // Reset the warning message
+                warningMessage = '';
+
                 return false; // All answers were correct; do not repeat the loop
             }
         }
     };
 
-    mainTimeline.push(descriptionTrial, questionsTrial);
+    mainTimeline.push(descriptionTrial, comprehensionLoop);
 
 
 
@@ -344,15 +379,16 @@ selectedVersion.descriptions.forEach(function(description, versionIndex) {
 });
 
 
-      /* create the end screen */
-      var end = {
-        type: 'html-keyboard-response',
-        stimulus: `<p>You're done! A .csv file containing your data should be automatically downloading right now.
-          Check your default downloads location to find it. Once you've found it, you can close the experiment.</p>`,
-        on_load: function() {
-          jsPsych.data.get().localSave('csv', 'psychology_test_data.csv');
-        }
-      };
+/* Create the end screen */
+var end = {
+    type: 'html-keyboard-response',
+    stimulus: `<p>You're done! A .csv file containing your data should be automatically downloading right now.
+        Check your default downloads location to find it. Once you've found it, you can close the experiment.</p>`,
+    on_load: function() {
+        jsPsych.data.get().localSave('csv', 'psychology_test_data_' + subjectID + '.csv');
+    }
+};
+    
 
       /* add end screen to main timeline */
       mainTimeline.push(end);
